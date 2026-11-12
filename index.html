@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>T-8 Acid VJ</title>
+<style>
+:root{
+  --ink:#edeae3; --dim:rgba(237,234,227,.60); --faint:rgba(237,234,227,.17); --wash:rgba(237,234,227,.07);
+  --panel:rgba(9,9,11,.78); --amber:#ff6a2a; --rec:#ff3350; --ok:#7ddc8a;
+  --font:Bahnschrift,"DIN Alternate","Avenir Next Condensed","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#000;overflow:hidden;color:var(--ink);
+  font:13px/1.35 var(--font);font-stretch:88%;letter-spacing:.012em;-webkit-font-smoothing:antialiased}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+button,select,input{font:inherit;font-stretch:inherit;letter-spacing:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+/* ---- transport bar: fades away while the music plays and the mouse rests ---- */
+#bar{position:fixed;left:0;right:0;top:0;z-index:5;display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;
+  padding:9px 12px 20px;background:linear-gradient(rgba(0,0,0,.80),rgba(0,0,0,.55) 55%,rgba(0,0,0,0));
+  transition:opacity .4s ease,transform .4s ease}
+body.quiet{cursor:none}
+body.quiet #bar,body.quiet #load{opacity:0;transform:translateY(-6px);pointer-events:none}
+.cluster{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cluster.right{margin-left:auto}
+.btn{appearance:none;background:var(--wash);border:1px solid var(--faint);border-radius:3px;padding:5px 11px 4px;
+  cursor:pointer;white-space:nowrap;transition:background .12s,border-color .12s}
+.btn:hover{border-color:var(--dim)}
+.btn.on{background:var(--ink);border-color:var(--ink);color:#0b0b0d}
+.btn.rec{background:var(--rec);border-color:var(--rec);color:#fff}
+.btn.wide{width:100%;margin:2px 0 8px}
+#btnPlay{min-width:64px;font-weight:600}
+#btnPlay.on{background:var(--amber);border-color:var(--amber);color:#170800}
+.read{color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.read b{color:var(--ink);font-weight:600;font-size:15px}
+.conn{display:inline-flex;align-items:center;gap:7px;color:var(--dim);white-space:nowrap}
+.conn i{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.conn.ok i{background:var(--ok)} .conn.lost i{background:var(--rec)}
+body.sa .conn,body.hw #btnPlay,body.hw #btnNew{display:none}
+
+/* ---- the 16 step pads: the bass pattern itself, laid out like the T-8's step keys ---- */
+.pads{display:flex;gap:3px;align-items:center}
+.pads i{width:13px;height:21px;border-radius:2px;background:rgba(237,234,227,.09);box-shadow:inset 0 0 0 1px rgba(237,234,227,.10);transition:background .08s}
+.pads i:nth-child(4n+1):not(:first-child){margin-left:6px}
+.pads i.on{background:rgba(255,106,42,.50);box-shadow:none}
+.pads i.acc{background:var(--amber);box-shadow:none}
+.pads i.cur{background:var(--ink);box-shadow:0 0 12px rgba(237,234,227,.75);transition:none}
+
+.seg{display:flex;border:1px solid var(--faint);border-radius:3px;overflow:hidden}
+.seg button{appearance:none;background:var(--wash);border:0;border-right:1px solid var(--faint);padding:5px 11px 4px;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button:hover{background:rgba(237,234,227,.14)}
+.seg button[aria-selected=true]{background:var(--ink);color:#0b0b0d}
+.seg button:disabled{color:var(--faint);text-decoration:line-through;cursor:not-allowed}
+
+/* ---- settings drawer ---- */
+#drawer{position:fixed;top:0;right:0;bottom:0;width:318px;max-width:100%;z-index:4;overflow:auto;overscroll-behavior:contain;
+  background:var(--panel);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-left:1px solid var(--faint);
+  padding:58px 18px 28px;transform:translateX(102%);transition:transform .26s ease;visibility:hidden}
+body.open #drawer{transform:none;visibility:visible}
+#drawer section{border-top:1px solid var(--faint);padding:10px 0 6px}
+#drawer section:first-child{border-top:0;padding-top:0}
+#drawer h2{margin:0 0 6px;font-size:13px;font-weight:600;color:var(--amber)}
+.row{display:grid;grid-template-columns:1fr auto;gap:1px 10px;align-items:baseline;margin:7px 0}
+.row output{color:var(--dim);font-variant-numeric:tabular-nums}
+.row input[type=range]{grid-column:1/3;width:100%;margin:2px 0 0;height:16px;accent-color:var(--amber);cursor:pointer}
+.row select{grid-column:1/3;width:100%;margin-top:3px;padding:4px 6px;background:#141416;border:1px solid var(--faint);border-radius:3px}
+.row.chk{grid-template-columns:auto 1fr;align-items:center}
+.row.chk input{width:15px;height:15px;margin:0;accent-color:var(--amber)}
+.note{margin:2px 0 8px;color:var(--dim)}
+.keys dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0 0 8px}
+.keys dt{color:var(--ink);font-variant-numeric:tabular-nums} .keys dd{margin:0;color:var(--dim)}
+
+#hint{position:fixed;left:50%;bottom:13%;transform:translateX(-50%);z-index:3;font-size:21px;letter-spacing:.02em;
+  text-align:center;text-shadow:0 1px 14px #000,0 0 2px #000;opacity:0;transition:opacity .7s;pointer-events:none;max-width:90vw}
+#hint.show{opacity:.92}
+#load{position:fixed;left:14px;bottom:12px;z-index:3;color:var(--dim);opacity:0;transition:opacity .3s;pointer-events:none}
+#load.show{opacity:1}
+#toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,8px);z-index:7;background:rgba(9,9,11,.86);border:1px solid var(--faint);
+  border-radius:3px;padding:7px 14px;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;max-width:90vw}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#glerr{display:none;position:fixed;left:14px;right:14px;bottom:14px;z-index:9;margin:0;padding:12px 14px;white-space:pre-wrap;overflow:auto;max-height:50vh;
+  background:rgba(40,6,10,.92);border:1px solid var(--rec);border-radius:3px;font:12px/1.5 ui-monospace,Consolas,monospace;color:#ffe9ec}
+@media (max-width:760px){ .pads{order:9;width:100%;justify-content:center} .cluster.right{margin-left:0} }
+@media (prefers-reduced-motion:reduce){ #bar,#drawer,#toast,#hint{transition:none} }
+</style>
+</head>
+<body>
+<canvas id="c" aria-label="Music visualiser"></canvas>
+<header id="bar">
+  <div class="cluster">
+    <button class="btn" id="btnPlay" title="Space bar">Play</button>
+    <button class="btn" id="btnNew" title="N">New pattern</button>
+    <span class="conn wait" id="conn"><i></i><span id="connTxt">Connecting</span></span>
+    <span class="read"><b id="bpm">130</b> bpm</span>
+    <span class="read" id="key"></span>
+  </div>
+  <div class="pads" id="pads" aria-hidden="true"></div>
+  <div class="cluster right">
+    <div class="seg" id="scenes" role="tablist" aria-label="Scene"></div>
+    <button class="btn" id="btnAuto" title="A — change scenes automatically" aria-pressed="false">Auto</button>
+    <button class="btn" id="btnSound" title="S" aria-pressed="false">Sound</button>
+    <button class="btn" id="btnRec" title="R — record a video of the picture and sound">Record</button>
+    <button class="btn" id="btnFull" title="F">Full screen</button>
+    <button class="btn" id="btnSet" title="Tab" aria-expanded="false" aria-controls="drawer">Settings</button>
+  </div>
+</header>
+<aside id="drawer" aria-label="Settings"><div id="groups"></div></aside>
+<div id="hint" role="status"></div>
+<div id="load"></div>
+<div id="toast" role="status"></div>
+<pre id="glerr"></pre>
+<script>/*@MODE@*/</script>
+<script>
+/*@JS@*/
+</script>
+</body>
+</html>
