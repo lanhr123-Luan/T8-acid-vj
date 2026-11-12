@@ -134,4 +134,4 @@ node   tools/governor.js           # 帧率自适应
 
 ## 许可
 
-MIT，见 `LICENSE`（把里面的名字换成你发布时用的名字）。
+MIT，见 `LICENSE`。
