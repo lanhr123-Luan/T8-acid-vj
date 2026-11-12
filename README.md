@@ -2,15 +2,15 @@
 
 给 Roland AIRA Compact **T-8** 用的 acid 贝斯线生成器 + 实时 VJ 画面。也可以完全不接硬件，只开一个网页玩。
 
-![Stage](docs/stage.jpg)
+![Stage](stage.jpg)
 
 | Liquid | Glass |
 |---|---|
-| ![Liquid](docs/liquid.jpg) | ![Glass](docs/glass.jpg) |
+| ![Liquid](liquid.jpg) | ![Glass](glass.jpg) |
 
 | Moon | Moon（近景） |
 |---|---|
-| ![Moon](docs/moon.jpg) | ![Moon close-up](docs/moon-closeup.jpg) |
+| ![Moon](moon.jpg) | ![Moon close-up](moon-closeup.jpg) |
 
 ---
 
